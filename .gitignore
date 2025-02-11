@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+pyagent.egg-info/
+dist/
+pyagent/_version.py
+.DS_Store
