@@ -16,7 +16,7 @@ class RelayPolicy:
     should_read: bool = True
     should_write: bool = True
     
-    def to_json_object(self) -> dict[str, bool]:
+    def to_json_object(self) :
         return {"read": self.should_read, "write": self.should_write}
 
 
@@ -37,6 +37,7 @@ class Relay:
     policy: RelayPolicy = RelayPolicy()
     ssl_options: Optional[dict] = None
     proxy_config: RelayProxyConnectionConfig = None
+    filters:Filters =None
 
     def __post_init__(self):
         self.queue = Queue()
@@ -121,7 +122,7 @@ class Relay:
         self.connected = False
 
     def _on_message(self, class_obj, message: str):
-        self.message_pool.add_message(message, self.url)
+        self.message_pool.add_message(message, self.url,self.filters)
     
     def _on_error(self, class_obj, error):
         self.connected = False

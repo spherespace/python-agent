@@ -20,10 +20,10 @@ class RelayException(Exception):
 
 @dataclass
 class RelayManager:
-    receive_key: str = None
+    max_size :int =0    
     def __post_init__(self):
         self.relays: dict[str, Relay] = {}
-        self.message_pool: MessagePool = MessagePool(self.receive_key)
+        self.message_pool: MessagePool = MessagePool(self.max_size)
         self.lock: Lock = Lock()
 
     def add_relay(
@@ -31,9 +31,9 @@ class RelayManager:
             url: str, 
             policy: RelayPolicy = RelayPolicy(),
             ssl_options: dict = None,
-            proxy_config: RelayProxyConnectionConfig = None):
+            proxy_config: RelayProxyConnectionConfig = None,filters:Filters=None):
 
-        relay = Relay(url, self.message_pool, policy, ssl_options, proxy_config)
+        relay = Relay(url, self.message_pool, policy, ssl_options, proxy_config,filters=filters)
 
         with self.lock:
             self.relays[url] = relay

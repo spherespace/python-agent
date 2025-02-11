@@ -23,30 +23,31 @@ class Agent:
     extra_attributes: Dict[str, str] = field(default_factory=dict)
     private_key: PrivateKey = None
     url: str = None
-    filter: Filter = Filter(kinds=Config.support_kinds)
     filters: Filters = Filters([])
     relay_manager: RelayManager = None
+    max_size:int =100
 
     def __post_init__(self):
+        filter: Filter = Filter(kinds=Config.support_kinds())
         if self.agent_name is None:
             self.agent_name = "agent_" + self.agent_id
         if self.create_time is None:
             self.create_time = int(time.time())
         if self.private_key is None:
             self.private_key = PrivateKey()
-            self.filter.add_arbitrary_tag('p', self.private_key.public_key)
+        filter.add_arbitrary_tag('p', self.private_key.public_key.hex())
             # self.filters.append(self.filter)
         if self.url is None:
             self.url = ""
         if self.relay_manager is None:
-            self.relay_manager = RelayManager(self.private_key.public_key)
-            self.relay_manager.add_relay(self.url)
-            subscription_id = self.agent_id
+            self.relay_manager = RelayManager(self.max_size)
+        self.filters.append(filter)
+        self.relay_manager.add_relay(self.url,filters=self.filters)
+        subscription_id = self.agent_id
+        
+        self.relay_manager.add_subscription_on_all_relays(subscription_id, self.filters)
 
-            self.relay_manager.add_subscription_on_all_relays(subscription_id, self.filters)
-            # self.relay_manager.open_connections(
-            #     {"cert_reqs": ssl.CERT_NONE})  # NOTE: This disables ssl certificate verification
-            time.sleep(1.25)  # allow the connections to open
+        time.sleep(1.25)  # allow the connections to open
 
 
 
@@ -68,10 +69,13 @@ class Agent:
         event_message = self.relay_manager.message_pool.get_event()
         tags = event_message.event.tags
         content = event_message.event.content
+        sender = event_message.event.public_key
         if event_message.event.kind == EventKind.ENCRYPTED_DIRECT_MESSAGE:
             for e_tag in tags:
-                if e_tag[0] == "#p":
-                    sender = e_tag[1]
-                    message = self.private_key.decrypt_message(content, sender)
-                    return {"sender": sender, "message": message}
+                if e_tag[0] == "p":
+                    try:
+                        message = self.private_key.decrypt_message(content, sender)
+                        return {"sender": sender, "message": message}
+                    except Exception as ex:
+                        print("xxx"+str(ex)+":"+str(event_message.event))
         return None

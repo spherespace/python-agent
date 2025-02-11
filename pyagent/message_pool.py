@@ -2,6 +2,8 @@ import json
 from queue import Queue
 from threading import Lock
 
+from .filter import Filters
+
 from .config import Config
 from .message_type import RelayMessageType
 from .event import Event
@@ -23,8 +25,7 @@ class EndOfStoredEventsMessage:
         self.url = url
 
 class MessagePool:
-    def __init__(self,receive_key:str,max_size=0) -> None:
-        self.receive_key =receive_key
+    def __init__(self,max_size=0) -> None:
         self.events: Queue[EventMessage] = Queue(max_size)
         self.notices: Queue[NoticeMessage] = Queue(max_size)
         self.eose_notices: Queue[EndOfStoredEventsMessage] = Queue(max_size)
@@ -32,8 +33,8 @@ class MessagePool:
         self.max_size = max_size
         self.lock: Lock = Lock()
     
-    def add_message(self, message: str, url: str):
-        self._process_message(message, url)
+    def add_message(self, message: str, url: str,filters:Filters):
+        self._process_message(message, url,filters)
 
     def get_event(self):
         return self.events.get()
@@ -53,14 +54,13 @@ class MessagePool:
     def has_eose_notices(self):
         return self.eose_notices.qsize() > 0
 
-    def _process_message(self, message: str, url: str):
+    def _process_message(self, message: str, url: str,filters:Filters=None):
         message_json = json.loads(message)
         message_type = message_json[0]
         print(message_json)
         print(message_type)
-        print(RelayMessageType.EVENT)
+   
         if message_type == RelayMessageType.EVENT:
-            print('----------------------gooods')
             subscription_id = message_json[1]
             e = message_json[2]
             event = Event(
@@ -75,10 +75,11 @@ class MessagePool:
 
             with self.lock:
                 if not event.id in self._unique_events :
-                    self.events.put(EventMessage(event, subscription_id, url))
-                    self._unique_events.add(event.id)
-                    if 0 < self.max_size < len(self._unique_events):
-                        self._unique_events.clear()
+                    if filters is not None  and filters.match(event):
+                        self.events.put(EventMessage(event, subscription_id, url))
+                        self._unique_events.add(event.id)
+                        if 0 < self.max_size < len(self._unique_events):
+                            self._unique_events.clear()
         elif message_type == RelayMessageType.NOTICE:
             self.notices.put(NoticeMessage(message_json[1], url))
         elif message_type == RelayMessageType.END_OF_STORED_EVENTS:

@@ -52,8 +52,8 @@ class Filter:
             single-letter tags.
         """
          # NIP-01 'e' and 'p' tags and any NIP-12 single-letter tags must be prefixed with "#"
-        tag_key = tag if len(tag) > 1 else f"#{tag}"
-        self.tags[tag_key] = values
+        # tag_key = tag if len(tag) > 1 else f"#{tag}"
+        self.tags[tag] = values
 
 
     def matches(self, event: Event) -> bool:
