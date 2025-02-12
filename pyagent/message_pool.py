@@ -57,8 +57,8 @@ class MessagePool:
     def _process_message(self, message: str, url: str,filters:Filters=None):
         message_json = json.loads(message)
         message_type = message_json[0]
-        print(message_json)
-        print(message_type)
+        # print(message_json)
+        # print(message_type)
    
         if message_type == RelayMessageType.EVENT:
             subscription_id = message_json[1]
