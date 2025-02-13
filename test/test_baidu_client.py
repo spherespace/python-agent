@@ -9,14 +9,15 @@ from pyagent.key import PrivateKey
 
 
 sys.path.append('/home/liam/python-ai/langchain')
-from cohere_agent import query_cohere
+
+from baidu_agent import ask_question
 
 from agent_cohere import CohereAgent
 
 API_KEY = "gaK0GO0rm0dMB43yVWgttIyS1LlHxtGLZRYtRKbv"
 
 # 假设你的 private_key 是一个 32 字节的十六进制字符串
-private_key_str = "4f05e24210d865b6a3ad31ad4436faa1927b80b42c08fdcbbc00917a2a1409bc"
+private_key_str = "3334cea7751e173ae49b3ea894969b8987ce67c0e74adf2b47ae1851761d6459"
 private_key_bytes = bytes.fromhex(private_key_str)  # 转换为字节
 
 # 创建 PrivateKey 对象
@@ -32,7 +33,7 @@ agent = Agent(
 
 try:
     # 发送消息
-    recipient_key = "3dd9b5cc8cf3afbb31cddf3194ef077442f622b0c74150853ce873fb8708deb0"
+    recipient_key = "a4310e4d71a4cb4b085c2ad343503bc9569ab5e7b6b420f735e6407b0a6439bb"
     #agent.send_message(recipient_key, "测试消息testnownewtestuser")
     send_key = "44188e98fdc1acd6614658d2334b1f75c73d3a0ce34e96f4bf7c4dcbc6303f7a"
     has_checked_all_messages = False
@@ -60,13 +61,13 @@ try:
                 msg = agent.get_message()
                 if msg and msg['sender'] == send_key:
                     question = msg['message']
-                    agent_test = CohereAgent(api_key="gaK0GO0rm0dMB43yVWgttIyS1LlHxtGLZRYtRKbv")
-                    result = agent_test.ask(question)
 
-                    #result = query_cohere(question, API_KEY)
+                    # agent_test = CohereAgent(api_key="gaK0GO0rm0dMB43yVWgttIyS1LlHxtGLZRYtRKbv")
+                    # result = agent_test.ask(question)
+                    result = ask_question(question)
 
                     message_to_send = "Received:" + result
-                    agent.send_message(recipient_key, message_to_send)
+                    agent.send_message(send_key, message_to_send)
                     print(f"收到来自 {msg['sender']} 的消息: {msg['message']}")
         time.sleep(1)  # 避免过于频繁的检查
         
